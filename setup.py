@@ -1,7 +1,7 @@
 from distutils.core import setup
 setup(
   name = 'pyfutureops',         # How you named your package folder (MyLib)
-  packages = ['pyfutureops'],   # Chose the same as "name"
+  packages = ['pyfutureops','pyfutureops.database'],   # Chose the same as "name"
   version = '0.3',      # Start with a small number and increase it with every change you make
   license='MIT',        # Chose a license from here: https://help.github.com/articles/licensing-a-repository
   description = 'Bootstrap code for Concurrent Futures Batch tracking',   # Give a short description about your library
@@ -9,6 +9,7 @@ setup(
   author_email = 'rushtokunal@gmail.com',      # Type in your E-Mail
   url = 'https://github.com/rushtokunal/PyFutureOps',   # Provide either the link to your github or to your website
   download_url = 'https://github.com/rushtokunal/PyFutureOps/archive/v0.3.tar.gz',
+  include_package_data=True,
   keywords = ['concurrent futures', 'multithreading', 'multiprocessing', 'spanner', 'restart recovery'],   # Keywords that define your package best
   install_requires=[            
           'google-cloud-spanner',
