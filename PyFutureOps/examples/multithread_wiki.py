@@ -7,7 +7,6 @@ import requests
 import pandas as pd
 import concurrent.futures
 from google.cloud import spanner
-import pyfutureops.database.db_tables as db
 import pyfutureops.database.db_operations as db_ops
 import pyfutureops.thread_ops as thread_ops
 requests.packages.urllib3.disable_warnings() 
@@ -17,6 +16,8 @@ requests.packages.urllib3.disable_warnings()
 # Get environment variables
 instance_id = os.environ['INSTANCE_NAME']
 database_id = os.environ['DATABASE_NAME']
+project_id=os.environ['PROJECT_ID_SPANNER']
+pgm='your_batch_name'
 
 logging_level = os.environ.get('LOGLEVEL', 'INFO').upper() #if not defined then set to INFO
 
@@ -28,8 +29,6 @@ else:
     logging.basicConfig(stream=sys.stdout,format='%(asctime)s - %(levelname)s - %(message)s', level='INFO')
     logging.info("LOGLEVEL not set in env variable or incorrect value passed")
     logging.info("Defaulting LOGLEVEL to : {}".format('INFO'))
-
-pgm='ace-dar-on-order-load-rms-to-bq'
 
 #the function which is threaded
 def get_wiki_page_existence(wiki_page_url, timeout=10):
@@ -46,9 +45,8 @@ wiki_page_urls = ["https://en.wikipedia.org/wiki/" + str(i) for i in range(10)]
 
 if __name__ == '__main__':
     try:
-        #create batch tables if they do not exist already
-        db.check_if_tables_already_exist(instance_id,database_id)
-
+        #create batch tables, and clean up previous runs
+        db_ops.preprocess(pgm)
         logging.info("Running threaded:")
         threaded_start = time.time()
         #initializing dataframes for each changed elements

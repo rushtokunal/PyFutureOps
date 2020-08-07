@@ -8,10 +8,21 @@ from google.cloud import spanner
 from google.cloud.spanner_v1.proto import type_pb2
 import pyfutureops.config
 import logging
+import os
+
+# Get environment variables
+INSTANCE_NAME = os.environ['INSTANCE_NAME']
+DATABASE_NAME = os.environ['DATABASE_NAME']
+PROJECT_ID = os.environ['PROJECT_ID_SPANNER']
+
+client = spanner.Client(project=PROJECT_ID)
+instance = client.instance(INSTANCE_NAME)
+database = instance.database(DATABASE_NAME)
 
 master_tables=['BATCH_FUTURE_CONTROL',
                'BATCH_FUTURE_BOOKMARK',
-               'BATCH_FUTURE_PROGRAM_STATUS'
+               'BATCH_FUTURE_PROGRAM_STATUS',
+               'BATCH_FUTURE_PROGRAM_HIST'
                ]
 #ddl statements, putting in the same file as unable to read for .sql files
 BATCH_FUTURE_BOOKMARK="""CREATE TABLE BATCH_FUTURE_BOOKMARK
@@ -24,7 +35,7 @@ BATCH_FUTURE_BOOKMARK="""CREATE TABLE BATCH_FUTURE_BOOKMARK
 	NON_FATAL_ERR_FLAG STRING(1024), 
 	NUM_COMMITS INT64, 
 	AVG_TIME_BTWN_COMMITS INT64
-   ) PRIMARY KEY (RESTART_NAME,THREAD_ID)"""
+   ) PRIMARY KEY (RESTART_NAME,THREAD_ID,THREAD_VAL)"""
 BATCH_FUTURE_CONTROL="""CREATE TABLE BATCH_FUTURE_CONTROL
         (   PROGRAM_NAME STRING(1024), 
             PROGRAM_DESC STRING(1024), 
@@ -35,7 +46,7 @@ BATCH_FUTURE_CONTROL="""CREATE TABLE BATCH_FUTURE_CONTROL
             COMMIT_MAX_CTR INT64, 
             LOCK_WAIT_TIME INT64, 
             RETRY_MAX_CTR INT64
-        ) PRIMARY KEY (PROGRAM_NAME)"""
+        ) PRIMARY KEY (PROGRAM_NAME,DRIVER_NAME)"""
 BATCH_FUTURE_PROGRAM_STATUS="""CREATE TABLE BATCH_FUTURE_PROGRAM_STATUS
    (RESTART_NAME STRING(1024),
     THREAD_ID STRING(1024), 
@@ -50,12 +61,27 @@ BATCH_FUTURE_PROGRAM_STATUS="""CREATE TABLE BATCH_FUTURE_PROGRAM_STATUS
 	CURRENT_OPERATOR_ID STRING(1024), 
 	ERR_MESSAGE STRING(1024)
    ) PRIMARY KEY (RESTART_NAME,THREAD_ID)"""
+BATCH_FUTURE_PROGRAM_HIST="""CREATE TABLE BATCH_FUTURE_PROGRAM_HIST
+   (RESTART_NAME STRING(1024), 
+    THREAD_ID STRING(1024), 
+	THREAD_VAL STRING(1024), 
+	START_TIME TIMESTAMP, 
+	PROGRAM_NAME STRING(1024), 
+    PROGRAM_STATUS STRING(1024),
+	NUM_THREADS INT64, 
+	COMMIT_MAX_CTR INT64, 
+	RESTART_TIME TIMESTAMP, 
+	FINISH_TIME TIMESTAMP,
+    LAST_UPD_TMST TIMESTAMP,
+	SUCCESS_FLAG STRING(1024), 
+	NON_FATAL_ERR_FLAG STRING(1024), 
+	NUM_COMMITS INT64, 
+	AVG_TIME_BTWN_COMMITS INT64,
+	COMMITS INT64
+   )PRIMARY KEY (RESTART_NAME,THREAD_ID,THREAD_VAL)
+   """
 # [START spanner_query_data_with_new_column]
-def check_if_tables_already_exist(instance_id, database_id):
-    spanner_client = spanner.Client()
-    instance = spanner_client.instance(instance_id)
-    database = instance.database(database_id)
-
+def check_if_tables_already_exist(instance_id, database_id, proj_id):
     with database.snapshot() as snapshot:
         tables=[]
         results = snapshot.execute_sql(
@@ -63,7 +89,8 @@ def check_if_tables_already_exist(instance_id, database_id):
                  FROM information_schema.tables
                 WHERE table_name IN('BATCH_FUTURE_CONTROL',
                                     'BATCH_FUTURE_BOOKMARK',
-                                    'BATCH_FUTURE_PROGRAM_STATUS'
+                                    'BATCH_FUTURE_PROGRAM_STATUS',
+                                    'BATCH_FUTURE_PROGRAM_HIST'
                                     )"""
         )
 
@@ -130,6 +157,12 @@ def create_batch_tables(instance_id, database_id, table_name):
         table_name,database_id, instance_id))
     elif table_name=='BATCH_FUTURE_PROGRAM_STATUS':
         operation = database.update_ddl([BATCH_FUTURE_PROGRAM_STATUS])
+        logging.info('Waiting for operation to complete...')
+        operation.result(120)
+        logging.info('Created table {} in database {} on instance {}'.format(
+        table_name,database_id, instance_id))
+    elif table_name=='BATCH_FUTURE_PROGRAM_HIST':
+        operation = database.update_ddl([BATCH_FUTURE_PROGRAM_HIST])
         logging.info('Waiting for operation to complete...')
         operation.result(120)
         logging.info('Created table {} in database {} on instance {}'.format(
