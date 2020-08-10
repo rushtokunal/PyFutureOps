@@ -20,3 +20,7 @@ Steps to follow
 
 TO DO:
 1)Implement sample for multiprocessing
+
+Steps to build
+python setup.py sdist
+python -m twine upload dist/pyfutureops-0.x.tar.gz
