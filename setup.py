@@ -8,7 +8,7 @@ setup(
   author = 'Kunal Gupta',                   # Type in your name
   author_email = 'rushtokunal@gmail.com',      # Type in your E-Mail
   url = 'https://github.com/rushtokunal/PyFutureOps',   # Provide either the link to your github or to your website
-  download_url = 'https://github.com/rushtokunal/PyFutureOps/archive/v0.5.tar.gz',
+  download_url = 'https://github.com/rushtokunal/PyFutureOps/archive/v0.6.tar.gz',
   include_package_data=True,
   keywords = ['concurrent futures', 'multithreading', 'multiprocessing', 'spanner', 'restart recovery'],   # Keywords that define your package best
   install_requires=[            
