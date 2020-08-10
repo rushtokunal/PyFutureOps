@@ -127,9 +127,6 @@ class MyStr(str):
 # [START spanner_create_database]
 def create_batch_tables(instance_id, database_id, table_name):
     """Creates a database and tables for sample data."""
-    spanner_client = spanner.Client()
-    instance = spanner_client.instance(instance_id)
-    database = instance.database(database_id)
     # logging.info(table_name.lower())
     # ddl="test"
     # if table_name:
